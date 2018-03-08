@@ -11,10 +11,11 @@ program generate
 
     ! Parameters of the representation
     integer :: Npoints
-    real(8) :: Eini, Efin, DE
+    real(8) :: Eini, Efin, DE, lnP
     real(8),dimension(:),allocatable :: E,P
     real(8) :: Norm
     logical :: do_gaussian
+    logical :: do_ln
 
     ! Parameters of the distribution
     real(8) :: av, sgm, sgm2
@@ -33,6 +34,7 @@ program generate
     Efin    = -1.d0
     Npoints = 5000
     do_gaussian = .false.
+    do_ln   = .false.
 
     !Read options from command line
     argument_retrieved=.false.
@@ -121,13 +123,19 @@ program generate
     do i=1,Npoints
         E(i) = Eini + dfloat(i-1) * DE
     enddo
+    if (N>200) do_ln=.true.
     if (do_gaussian) then
         do i=1,Npoints
             P(i) = dexp(-(E(i)-av)**2/2.d0/sgm2)
         enddo
+    elseif (do_ln) then
+        do i=1,Npoints
+            lnP  = dfloat(N-2)/2.d0*dlog(E(i)/kB**2/T**2) - E(i)/kB/T
+            P(i) = dexp(lnP)
+        enddo
     else
         do i=1,Npoints
-            P(i) = dsqrt(E(i))**(N-2) * dexp(-E(i)/(kB*T))
+            P(i) = dsqrt(E(i)/kB/T)**(N-2)/(kB*T) * dexp(-E(i)/(kB*T))
         enddo
     endif
     
