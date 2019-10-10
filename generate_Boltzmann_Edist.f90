@@ -3,7 +3,10 @@ program generate
     implicit none
 
     real(8),parameter :: pi = 3.141592d0 , &
-                         kb = 0.695 ! cm-1
+                         cm1tokcalmol = 2.8591d-3, &
+                         cm1tokJmol   = 1.1963d-2
+    ! Allow Boltzmann constant to change (units), so not a parameter
+    real(8)           :: kb = 0.695 ! cm-1,
 
     ! Parameters of the system
     real(8) :: T
@@ -19,6 +22,9 @@ program generate
 
     ! Parameters of the distribution
     real(8) :: av, sgm, sgm2
+    
+    ! Management of units
+    character(len=50) :: units
 
     !Input selections stuff
     logical :: argument_retrieved
@@ -65,6 +71,9 @@ program generate
                 call getarg(i+1, arg)
                 read(arg,*) Efin
                 argument_retrieved=.true.
+            case ("-units")
+                call getarg(i+1, units)
+                argument_retrieved=.true.
             case ("-gau")
                 do_gaussian=.true.
             case ("-h")
@@ -76,12 +85,30 @@ program generate
 !                print*, "  -Eini       Initial energy value (default: 0)"
 !                print*, "  -Efin       Final energy value (default: 3*NkBT)"
                 print*, "  -gau        Use Gaussian disribution"
+                print*, "  -units      Units to output energy (cm-1|kJmol|kcalmol)"
+                print*, "              (default: cm-1)"
                 print*, ""
                 stop
             case default
                 write(0,*) "Unknown label ignored:", trim(adjustl(arg))
         end select
     enddo
+    
+    ! Set units
+    write(0,*) "Selected units: "//trim(adjustl(units)) 
+    if (units == 'cm-1') then
+        write(0,*) "Using: cm-1"
+        !kB = kB
+    else if (units == 'kJmol') then
+        write(0,*) "Using: kJ/mol"
+        kB = kB * cm1tokJmol
+    else if (units == 'kcalmol') then
+        write(0,*) "Using: kcal/mol"
+        kB = kB * cm1tokcalmol
+    else
+        write(0,*) "ERROR: Unknown units: "//trim(adjustl(units)) 
+        stop
+    endif
 
     ! Parameters of the distribution
     sgm2= 0.5d0*dfloat(N)*(kB*T)**2
