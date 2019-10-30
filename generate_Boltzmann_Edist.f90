@@ -41,6 +41,7 @@ program generate
     Npoints = 5000
     do_gaussian = .false.
     do_ln   = .false.
+    units   = 'cm-1'
 
     !Read options from command line
     argument_retrieved=.false.
